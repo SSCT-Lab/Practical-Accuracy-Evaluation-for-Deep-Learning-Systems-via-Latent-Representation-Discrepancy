@@ -30,9 +30,6 @@ The additional noise datasets could be downloaded from [odin-pytorch](https://gi
 
 Please place them to `./data/`.
 
-```shell
-python RQ1.py --dataset mnist --net_type resnet18 --gpu 0
-```
 
 ## Step 2: Conducting Research Questions
 
@@ -51,13 +48,6 @@ python RQ1-effectiveness.py --dataset mnist --net_type resnet18 --gpu 0
 ```
 
 ## RQ2: OOD Detection
-
-We use download links of two out-of-distributin datasets from [odin-pytorch](https://github.com/facebookresearch/odin):
-
-- [Tiny-ImageNet (resize)](https://www.dropbox.com/s/kp3my3412u5k9rl/Imagenet_resize.tar.gz)
-- [LSUN (resize)](https://www.dropbox.com/s/moqh2wh8696c3yl/LSUN_resize.tar.gz)
-
-Please place them to `./data/`.
 
 ```shell
 python RQ2-OOD.py --dataset mnist --net_type resnet18 --gpu 0
