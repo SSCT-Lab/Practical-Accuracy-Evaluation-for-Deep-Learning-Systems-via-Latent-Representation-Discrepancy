@@ -115,10 +115,10 @@ def get_to_select_loader(image_path, label_path, dataroot, dataset, batch, with_
     return loader, len(tmp_data)
 
 
-# 1. 根据 kernel_in(gentle) 的得分排序，从大到小选择
-def get_gentle_kernel(dir_name, in_dataset_name):
-    known_val = np.loadtxt('{}/Gentle_Val_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
-    known_test = np.loadtxt('{}/Gentle_Test_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
+# 1. 根据 kernel_in(lrd) 的得分排序，从大到小选择
+def get_lrd_kernel(dir_name, in_dataset_name):
+    known_val = np.loadtxt('{}/LRD_Val_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
+    known_test = np.loadtxt('{}/LRD_Test_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
     in_score = np.concatenate((known_val, known_test))
     kernel_in = gaussian_kde(in_score)
     return kernel_in
@@ -146,35 +146,26 @@ def get_mean_precision(model, net_type, dataset, dataroot, cluster_num, batch, t
         # data_root = os.path.expanduser(os.path.join(dataroot, str(dataset) + '-data'))
         train_loader_c, test_loader_c = My_data_loader.getTargetDataSet(dataset, batch, trans, dataroot, c_cluster)
 
-        # prepare for Gentle
+        # prepare for LRD
         sample_mean, precision = lib.sample_estimator(model, cluster_num, feature_list, train_loader_c)
         np.save(mean_path, sample_mean)
         np.save(precision_path, precision)
     return sample_mean, precision
 
 
-def kernel_sampling(in_loader, model, dataset, cluser_num, sample_mean, precision, kernel_in, select_num):
+def new_lrd_sampling(loader, train_loader, model, dataset, cluser_num, sample_mean, precision, select_num):
     feature_list, num_output = metrics.get_information(model, dataset)
-    gentle_score = lib.get_gentle_score(model, in_loader, cluser_num, "OOD", sample_mean, precision, num_output-1)
-    gentle_kernel = kernel_in(gentle_score)
-    idx_list = np.argsort(gentle_kernel)[::-1]  # gentle_kernel 从大到小排序对应的 idx
-    select = idx_list[:select_num]
-    return select
+    lrd_score = lib.get_lrd_score(model, loader, cluser_num, "OOD", sample_mean, precision, num_output - 1)
 
-
-def new_gentle_sampling(loader, train_loader, model, dataset, cluser_num, sample_mean, precision, select_num):
-    feature_list, num_output = metrics.get_information(model, dataset)
-    gentle_score = lib.get_gentle_score(model, loader, cluser_num, "OOD", sample_mean, precision, num_output - 1)
-
-    M_in_train = lib.get_gentle_score(model, train_loader, cluser_num, True, sample_mean, precision, num_output - 1)
+    M_in_train = lib.get_lrd_score(model, train_loader, cluser_num, True, sample_mean, precision, num_output - 1)
     M_in_train = np.asarray(M_in_train, dtype=np.float32)
     Mahalanobis_in_train = M_in_train.reshape((M_in_train.shape[0], -1))
     Mahalanobis_in_train = np.asarray(Mahalanobis_in_train, dtype=np.float32)
     Mahalanobis_in_train = np.array(Mahalanobis_in_train).flatten()  # score(T_train)
 
     dis1 = []
-    for i in range(len(gentle_score)):
-        tmp_score = np.asarray(gentle_score[i])
+    for i in range(len(lrd_score)):
+        tmp_score = np.asarray(lrd_score[i])
         tmp_score = np.array(tmp_score).flatten()
         tmp_dis = wasserstein_distance(Mahalanobis_in_train, tmp_score)
         dis1.append(tmp_dis)
@@ -183,13 +174,13 @@ def new_gentle_sampling(loader, train_loader, model, dataset, cluser_num, sample
     return select
 
 
-def get_boundary_gentle(dir_name, in_dataset_name, out_dist_list):
+def get_boundary_lrd(dir_name, in_dataset_name, out_dist_list):
     out_score = np.array([])
-    known_val = np.loadtxt('{}/Gentle_Val_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
-    known_test = np.loadtxt('{}/Gentle_Test_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
+    known_val = np.loadtxt('{}/LRD_Val_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
+    known_test = np.loadtxt('{}/LRD_Test_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
     for out_dist in out_dist_list:
-        novel_val = np.loadtxt('{}/Gentle_Val_{}_OOD.txt'.format(dir_name, out_dist), delimiter='\n')
-        novel_test = np.loadtxt('{}/Gentle_Test_{}_OOD.txt'.format(dir_name, out_dist), delimiter='\n')
+        novel_val = np.loadtxt('{}/LRD_Val_{}_OOD.txt'.format(dir_name, out_dist), delimiter='\n')
+        novel_test = np.loadtxt('{}/LRD_Test_{}_OOD.txt'.format(dir_name, out_dist), delimiter='\n')
         out_score = np.concatenate((out_score, novel_val))
         out_score = np.concatenate((out_score, novel_test))
     in_score = np.concatenate((known_val, known_test))
@@ -208,7 +199,7 @@ def get_boundary_gentle(dir_name, in_dataset_name, out_dist_list):
     # return x[idx]
 
 
-def gentle_sampling(boundary_score, case_score):
+def lrd_sampling(boundary_score, case_score):
     selected_list = []
     idx_list = np.argsort(case_score)
     for i in idx_list:

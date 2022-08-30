@@ -1,5 +1,5 @@
 '''
-calculate the Empirical Generalization (EG), NBC, SNAC, Gentle
+calculate the Empirical Generalization (EG), NBC, SNAC, LRD
 EG: input a pre-trained model, train dataset, and test dataset, output the EG for this model;
 Others: input a pre-trained model, and train dataset, output the generalization score for this model.
 '''
@@ -182,7 +182,7 @@ def calc_nc(model, test_loader, upper, lower, nc_k, dataset):
     return upper_act_cnt, lower_act_cnt, act_cnt
 
 
-def calc_gentle(model, train_loader, dataset, batch, trans, dataroot, aug_train_loader, feature_save_path,
+def calc_lrd(model, train_loader, dataset, batch, trans, dataroot, aug_train_loader, feature_save_path,
                 label_save_path, cluster_num):
     # set information about feature extaction
     feature_list, num_output = get_information(model, dataset)
@@ -192,13 +192,13 @@ def calc_gentle(model, train_loader, dataset, batch, trans, dataroot, aug_train_
     train_loader_c, test_loader_c = My_data_loader.getTargetDataSet(dataset, batch, trans, dataroot, c_cluster)
     sample_mean, precision = lib.sample_estimator(model, cluster_num, feature_list, train_loader_c)
 
-    M_in_train = lib.get_gentle_score(model, train_loader, cluster_num, True, sample_mean, precision, num_output - 1)
+    M_in_train = lib.get_lrd_score(model, train_loader, cluster_num, True, sample_mean, precision, num_output - 1)
     M_in_train = np.asarray(M_in_train, dtype=np.float32)
     Mahalanobis_in_train = M_in_train.reshape((M_in_train.shape[0], -1))
     Mahalanobis_in_train = np.asarray(Mahalanobis_in_train, dtype=np.float32)
     Mahalanobis_in_train = np.array(Mahalanobis_in_train).flatten()  # score(T_train)
 
-    M_in_train_aug = lib.get_gentle_score(model, aug_train_loader, cluster_num, True, sample_mean, precision,
+    M_in_train_aug = lib.get_lrd_score(model, aug_train_loader, cluster_num, True, sample_mean, precision,
                                           num_output - 1)
     M_in_train_aug = np.asarray(M_in_train_aug, dtype=np.float32)
     Mahalanobis_in_train_aug = M_in_train_aug.reshape((M_in_train_aug.shape[0], -1))
@@ -206,7 +206,7 @@ def calc_gentle(model, train_loader, dataset, batch, trans, dataroot, aug_train_
     Mahalanobis_in_train_aug = np.array(Mahalanobis_in_train_aug).flatten()  # score(T_train')
 
     out_test_loader = My_data_loader.get_OOD_Dataset(dataset, batch, trans, dataroot)
-    M_out = lib.get_gentle_score(model, out_test_loader, cluster_num, False, sample_mean, precision, num_output - 1)
+    M_out = lib.get_lrd_score(model, out_test_loader, cluster_num, False, sample_mean, precision, num_output - 1)
     M_out = np.asarray(M_out, dtype=np.float32)
     Mahalanobis_out = M_out.reshape((M_out.shape[0], -1))
     Mahalanobis_out = np.asarray(Mahalanobis_out, dtype=np.float32)
@@ -214,8 +214,8 @@ def calc_gentle(model, train_loader, dataset, batch, trans, dataroot, aug_train_
 
     dis1 = wasserstein_distance(Mahalanobis_in_train, Mahalanobis_in_train_aug)
     dis2 = wasserstein_distance(Mahalanobis_in_train, Mahalanobis_out)
-    gentle_gen = dis1 / dis2
-    return gentle_gen
+    lrd_gen = 1 - (dis1 / dis2)
+    return lrd_gen
 
 
 def getLastFeatureCluster(model, train_loader, feature_save_path, label_save_path, cluster_classes, feature_size):
@@ -231,7 +231,7 @@ def getLastFeatureCluster(model, train_loader, feature_save_path, label_save_pat
         np.save(feature_save_path, Feature[1:])
     # cluster
     X = np.load(feature_save_path)
-    print("saved_feature shape: ", X.shape)
+    # print("saved_feature shape: ", X.shape)
     X_tsne = TSNE(n_components=2).fit_transform(X)
     c_cluster = GMM(n_components=cluster_classes).fit_predict(X_tsne)
     np.save(label_save_path, c_cluster)

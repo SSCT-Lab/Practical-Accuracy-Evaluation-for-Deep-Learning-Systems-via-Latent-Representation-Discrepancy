@@ -8,7 +8,7 @@ import os
 from selection import *
 
 
-def get_gentle_score(dataset, net_type, score_path, num_classes=10):
+def get_lrd_score(dataset, net_type, score_path, num_classes=10):
     loader_batch, test_num = 200, 10000
     if dataset == 'svhn':
         test_num = 26032
@@ -42,25 +42,25 @@ def get_gentle_score(dataset, net_type, score_path, num_classes=10):
     sample_mean, precision = get_mean_precision(model, net_type, in_dataset_name, dataroot, cluster_num, 200,
                                                 train_loader, outf, mean_path, precision_path)
     feature_list, num_output = metrics.get_information(model, in_dataset_name)
-    lib.get_gentle_score(model, test_loader, cluster_num, "ID", sample_mean, precision, num_output - 1,
+    lib.get_lrd_score(model, test_loader, cluster_num, "ID", sample_mean, precision, num_output - 1,
                          write_file=True, dataset_name=in_dataset_name, outf=score_path)
     for out_dist in out_dist_list:
         out_test_loader = My_data_loader.getNonTargetDataSet(out_dist, 200, trans, dataroot)
         print('Out-distribution: ' + out_dist)
-        lib.get_gentle_score(model, out_test_loader, cluster_num, "OOD", sample_mean, precision,
+        lib.get_lrd_score(model, out_test_loader, cluster_num, "OOD", sample_mean, precision,
                              num_output - 1, write_file=True, dataset_name=out_dist, outf=score_path)
 
 
 def dke_plot(dir_name, in_dataset_name, out_dist_list):
-    if not os.path.exists('{}/Gentle_Val_{}_OOD.txt'.format(dir_name, out_dist_list[0])):  # OOD的 gentle得分没有保存，需要先计算一次
-        get_gentle_score(in_dataset_name, net_type, score_path, num_classes=10)
+    if not os.path.exists('{}/LRD_Val_{}_OOD.txt'.format(dir_name, out_dist_list[0])):  # OOD的 LRD得分没有保存，需要先计算一次
+        get_lrd_score(in_dataset_name, net_type, score_path, num_classes=10)
 
     out_score = np.array([])
-    known_val = np.loadtxt('{}/Gentle_Val_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
-    known_test = np.loadtxt('{}/Gentle_Test_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
+    known_val = np.loadtxt('{}/LRD_Val_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
+    known_test = np.loadtxt('{}/LRD_Test_{}_ID.txt'.format(dir_name, in_dataset_name), delimiter='\n')
     for out_dist in out_dist_list:
-        novel_val = np.loadtxt('{}/Gentle_Val_{}_OOD.txt'.format(dir_name, out_dist), delimiter='\n')
-        novel_test = np.loadtxt('{}/Gentle_Test_{}_OOD.txt'.format(dir_name, out_dist), delimiter='\n')
+        novel_val = np.loadtxt('{}/LRD_Val_{}_OOD.txt'.format(dir_name, out_dist), delimiter='\n')
+        novel_test = np.loadtxt('{}/LRD_Test_{}_OOD.txt'.format(dir_name, out_dist), delimiter='\n')
         out_score = np.concatenate((out_score, novel_val))
         out_score = np.concatenate((out_score, novel_test))
     in_score = np.concatenate((known_val, known_test))

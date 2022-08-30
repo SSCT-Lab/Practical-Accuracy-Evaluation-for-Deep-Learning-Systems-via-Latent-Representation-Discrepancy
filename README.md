@@ -1,5 +1,4 @@
-# LDR: Robustness Analysis towards Usage Scenario
-
+# Practical Accuracy Evaluation for Deep Learning Systems via Latent Representation Discrepancy
 ## Environment
 
 - python=3.6
@@ -35,7 +34,9 @@ Please place them to `./data/`.
 python RQ1.py --dataset mnist --net_type resnet18 --gpu 0
 ```
 
-## RQ1: Analysis Effectiveness.
+## Step 2: Conducting Research Questions
+
+### RQ1: Effectiveness.
 
 Firstly, we need to prepare 10 models with different generalizability:
 
@@ -46,21 +47,20 @@ python train_model.py --dataset mnist --net_type resnet18 --lr 0.01 --batch_size
 Then, we can calculate the correlation between Acc/Loss and all baselines:
 
 ```shell
-python RQ1.py --dataset mnist --net_type resnet18 --gpu 0
+python RQ1-effectiveness.py --dataset mnist --net_type resnet18 --gpu 0
 ```
 
-## RQ2: Generation Quality
-First, we prepare two GAN models for each dataset, and saved the model in `./pre_trained/dataset/`.
-For example, we could train a GAN model with default setting in [PyTorch-GAN](https://github.com/eriklindernoren/PyTorch-GAN).
+## RQ2: OOD Detection
+
+We use download links of two out-of-distributin datasets from [odin-pytorch](https://github.com/facebookresearch/odin):
+
+- [Tiny-ImageNet (resize)](https://www.dropbox.com/s/kp3my3412u5k9rl/Imagenet_resize.tar.gz)
+- [LSUN (resize)](https://www.dropbox.com/s/moqh2wh8696c3yl/LSUN_resize.tar.gz)
+
+Please place them to `./data/`.
 
 ```shell
-python generation_gan.py --dataset mnist --n_epochs 50 --img_size 28 --channels 1
-```
-
-Then, for a specific generation type, we can calculate the FID score for seed set filtered by different testing metrics.
-
-```shell
-python RQ2-generation.py --dataset mnist --net_type resnet18 --gpu 0
+python RQ2-OOD.py --dataset mnist --net_type resnet18 --gpu 0
 ```
 
 ## RQ3: Selection and Retraining

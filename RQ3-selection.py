@@ -177,20 +177,20 @@ if __name__ == '__main__':
     # print("ces_select dataset size: ", len(ces_id_in_inloader))
     # ces_loader, _ = get_to_select_loader(img_path, label_path, dataroot, dataset, batch, sampler=ces_id_in_inloader)
 
-    # step5: 执行 Gentle 的选择策略
+    # step5: 执行 LRD 的选择策略
     mean_path = outf + str(cluster_num) + 'classes_mean.npy'
     precision_path = outf + str(cluster_num) + 'classes_precision.npy'
     sample_mean, precision = get_mean_precision(model, net_type, dataset, dataroot, cluster_num, loader_batch,
                                                 train_loader, outf, mean_path, precision_path)
     feature_list, num_output = metrics.get_information(model, dataset)
-    # lib.get_gentle_score(model, aug_test_loader, cluster_num, "ID", sample_mean, precision, num_output - 1,
+    # lib.get_lrd_score(model, aug_test_loader, cluster_num, "ID", sample_mean, precision, num_output - 1,
     #                      write_file=True, dataset_name=dataset, outf=outf)
-    # kernel_in = get_gentle_kernel(outf, dataset)
+    # kernel_in = get_lrd_kernel(outf, dataset)
     # kernel_select = kernel_sampling(loader, model, dataset, cluster_num, sample_mean, precision, kernel_in, select_num)
     # kernel_id_in_inloader = [total_to_select_list[i] for i in kernel_select if total_to_select_list[i] < train_num]
     # print("kernel_select dataset size: ", len(kernel_id_in_inloader))
     # kernel_loader, _ = get_to_select_loader(img_path, label_path, dataroot, dataset, batch, sampler=kernel_id_in_inloader)
-    kernel_select = new_gentle_sampling(loader, train_loader, model, dataset, cluster_num, sample_mean, precision,
+    kernel_select = new_lrd_sampling(loader, train_loader, model, dataset, cluster_num, sample_mean, precision,
                                         select_num)
     kernel_id_in_inloader = [total_to_select_list[i] for i in kernel_select if total_to_select_list[i] < train_num]
     print("kernel_select dataset size: ", len(kernel_id_in_inloader))
@@ -212,9 +212,9 @@ if __name__ == '__main__':
                       aug_test_loader, re_epoch, lr)  # # test_and_aug_loader
 
     # ----------- 验证结果 -------------
-    EG_ori, EG_kernel, EG_gentle, EG_least, EG_margin, EG_entropy, EG_random, EG_gini, EG_mcp, EG_lsa = [],[],[],[],[],[],[],[],[],[]
-    mix_EG_ori, mix_EG_kernel, mix_EG_gentle, mix_EG_least, mix_EG_margin, mix_EG_entropy, mix_EG_random, mix_EG_gini, mix_EG_mcp, mix_EG_lsa = [],[],[],[],[],[],[],[],[],[]
-    ACC_ori, ACC_kernel, ACC_gentle, ACC_least, ACC_margin, ACC_entropy, ACC_random, ACC_gini, ACC_mcp, ACC_lsa = [], [], [], [], [], [], [], [], [], []
+    EG_ori, EG_kernel, EG_lrd, EG_least, EG_margin, EG_entropy, EG_random, EG_gini, EG_mcp, EG_lsa = [],[],[],[],[],[],[],[],[],[]
+    mix_EG_ori, mix_EG_kernel, mix_EG_lrd, mix_EG_least, mix_EG_margin, mix_EG_entropy, mix_EG_random, mix_EG_gini, mix_EG_mcp, mix_EG_lsa = [],[],[],[],[],[],[],[],[],[]
+    ACC_ori, ACC_kernel, ACC_lrd, ACC_least, ACC_margin, ACC_entropy, ACC_random, ACC_gini, ACC_mcp, ACC_lsa = [], [], [], [], [], [], [], [], [], []
 
     for i in range(5):  # 算 EG 用的是 test'
         train_loader, test_loader, aug_test_loader, test_and_aug_loader = get_train_and_aug_test(dataroot, dataset,

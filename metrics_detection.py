@@ -41,6 +41,7 @@ def get_performance(model, net_type, dataset, outf, batch, dataroot, test_loader
                 test_results_oe = callog.metric(outf, ['Test'], file_title="OE", in_dataset_name=dataset, out_dataset_name=out_dist, sort_reverse=False)
                 maxp_line_list.append(test_results_maxp)
                 oe_line_list.append(test_results_oe)
+
             else:  # ODIN 的指标
                 val_results = callog.metric(outf, ['Val'], file_title="confidence", in_dataset_name=dataset, out_dataset_name=out_dist, sort_reverse=False)
                 energy_val_results = callog.metric(outf, ['Val'], file_title="energy", in_dataset_name=dataset, out_dataset_name=out_dist, sort_reverse=False)
@@ -57,10 +58,10 @@ def get_performance(model, net_type, dataset, outf, batch, dataroot, test_loader
     return maxp_line_list, oe_line_list, ODIN_best_results, ODIN_best_temperature, energy_best_results, energy_best_temperature
 
 
-def get_gentle_performance(model, net_type, dataset, outf, batch, dataroot, train_loader, test_loader, out_dist_list, trans, cluster_num_list):
-    Gentle_best_tnr = [0] * len(out_dist_list)
-    Gentle_best_results = [0] * len(out_dist_list)
-    Gentle_best_cluster = [-1] * len(out_dist_list)
+def get_lrd_performance(model, net_type, dataset, outf, batch, dataroot, train_loader, test_loader, out_dist_list, trans, cluster_num_list):
+    LRD_best_tnr = [0] * len(out_dist_list)
+    LRD_best_results = [0] * len(out_dist_list)
+    LRD_best_cluster = [-1] * len(out_dist_list)
 
     feature_save_path = outf + 'feature_' + net_type + '_' + dataset + '.npy'
 
@@ -75,13 +76,13 @@ def get_gentle_performance(model, net_type, dataset, outf, batch, dataroot, trai
         c_cluster = np.load(label_save_path)
         train_loader_c, test_loader_c = My_data_loader.getTargetDataSet(dataset, batch, trans, dataroot, c_cluster)
 
-        # prepare for Gentle
+        # prepare for LRD
         sample_mean, precision = lib.sample_estimator(model, cluster_num, feature_list, train_loader_c)
         print("sample_mean[-1] shape:\n", sample_mean[-1].shape, ". len of sample_mean:", len(sample_mean))
         print("precision[-1] shape:\n", precision[-1].shape, ". len of precision:", len(precision))
 
-        print('Geting Gentle scores')
-        lib.get_gentle_score(model, test_loader, cluster_num, "ID", sample_mean, precision, num_output - 1,
+        print('Geting LRD scores')
+        lib.get_lrd_score(model, test_loader, cluster_num, "ID", sample_mean, precision, num_output - 1,
                              write_file=True, dataset_name=dataset, outf=outf)
 
         out_count = 0
@@ -89,20 +90,20 @@ def get_gentle_performance(model, net_type, dataset, outf, batch, dataroot, trai
         for out_dist in out_dist_list:
             out_test_loader = My_data_loader.getNonTargetDataSet(out_dist, batch, trans, dataroot)
             print('Out-distribution: ' + out_dist)
-            lib.get_gentle_score(model, out_test_loader, cluster_num, "OOD", sample_mean, precision,
+            lib.get_lrd_score(model, out_test_loader, cluster_num, "OOD", sample_mean, precision,
                                  num_output - 1, write_file=True, dataset_name=out_dist, outf=outf)
-            val_results = callog.metric(outf, ['Val'], file_title='Gentle', in_dataset_name=dataset,
+            val_results = callog.metric(outf, ['Val'], file_title='LRD', in_dataset_name=dataset,
                                         out_dataset_name=out_dist, sort_reverse=True)
             # print(val_results)
-            if Gentle_best_tnr[out_count] < val_results['Val']['TNR']:
-                Gentle_best_tnr[out_count] = val_results['Val']['TNR']
-                Gentle_best_results[out_count] = callog.metric(outf, ['Test'], file_title='Gentle',
+            if LRD_best_tnr[out_count] < val_results['Val']['TNR']:
+                LRD_best_tnr[out_count] = val_results['Val']['TNR']
+                LRD_best_results[out_count] = callog.metric(outf, ['Test'], file_title='LRD',
                                                                in_dataset_name=dataset, out_dataset_name=out_dist,
                                                                sort_reverse=True)
-                Gentle_best_cluster[out_count] = cluster_num
+                LRD_best_cluster[out_count] = cluster_num
 
             out_count += 1
-    return Gentle_best_results, Gentle_best_cluster
+    return LRD_best_results, LRD_best_cluster
 
 
 def show_detection_score(best_results, out_dist_list, best_temperature=None, best_cluster=None):
@@ -142,14 +143,14 @@ def save_information_mahala(model, dataset, outf, batch, dataroot, train_loader,
     magnitude = 0.0
     print('Noise: ' + str(magnitude))
 
-    M_in = lib.get_gentle_score(model, test_loader, num_classes, "ID", Maha_sample_mean, Maha_precision, num_output-1)
+    M_in = lib.get_lrd_score(model, test_loader, num_classes, "ID", Maha_sample_mean, Maha_precision, num_output-1)
     M_in = np.asarray(M_in, dtype=np.float32)
     Mahalanobis_in = M_in.reshape((M_in.shape[0], -1))
 
     for out_dist in out_dist_list:
         out_test_loader = My_data_loader.getNonTargetDataSet(out_dist, batch, trans, dataroot)
         print('Out-distribution: ' + out_dist)
-        M_out = lib.get_gentle_score(model, out_test_loader, num_classes, "OOD", Maha_sample_mean, Maha_precision, num_output-1)
+        M_out = lib.get_lrd_score(model, out_test_loader, num_classes, "OOD", Maha_sample_mean, Maha_precision, num_output-1)
         M_out = np.asarray(M_out, dtype=np.float32)
         Mahalanobis_out = M_out.reshape((M_out.shape[0], -1))
 

@@ -17,7 +17,7 @@ def get_gaussian_score(model, data, layer_index, num_classes, sample_mean, preci
     output, out_features_list = model.feature_list(data)
     out_features = out_features_list[layer_index]
 
-    # compute Gentle score
+    # compute LRD score
     gaussian_score = 0
     for i in range(num_classes):
         batch_sample_mean = sample_mean[layer_index][i]
@@ -114,14 +114,14 @@ def get_cov(model, test_loader, upper, lower, neuron_num, outf, dataset_name, ou
     g_NAC.close()
 
 
-def get_gentle_score(model, test_loader, num_classes, out_flag, sample_mean, precision, layer_index,
+def get_lrd_score(model, test_loader, num_classes, out_flag, sample_mean, precision, layer_index,
                      write_file=False, dataset_name=None, outf=None):
     model.eval()
     total = 0
 
     if write_file:
-        temp_file_name_val = '%s/Gentle_Val_%s_%s.txt' % (outf, dataset_name, out_flag)
-        temp_file_name_test = '%s/Gentle_Test_%s_%s.txt' % (outf, dataset_name, out_flag)
+        temp_file_name_val = '%s/LRD_Val_%s_%s.txt' % (outf, dataset_name, out_flag)
+        temp_file_name_test = '%s/LRD_Test_%s_%s.txt' % (outf, dataset_name, out_flag)
 
         g = open(temp_file_name_val, 'w')
         f = open(temp_file_name_test, 'w')
@@ -143,14 +143,14 @@ def get_gentle_score(model, test_loader, num_classes, out_flag, sample_mean, pre
             score.extend(gaussian_score.cpu().numpy())
         return score
 
-def get_gentle_score_without_label(model, test_loader, num_classes, out_flag, sample_mean, precision, layer_index,
+def get_lrd_score_without_label(model, test_loader, num_classes, out_flag, sample_mean, precision, layer_index,
                      write_file=False, dataset_name=None, outf=None):
     model.eval()
     total = 0
 
     if write_file:
-        temp_file_name_val = '%s/Gentle_Val_%s_%s.txt' % (outf, dataset_name, out_flag)
-        temp_file_name_test = '%s/Gentle_Test_%s_%s.txt' % (outf, dataset_name, out_flag)
+        temp_file_name_val = '%s/LRD_Val_%s_%s.txt' % (outf, dataset_name, out_flag)
+        temp_file_name_test = '%s/LRD_Test_%s_%s.txt' % (outf, dataset_name, out_flag)
 
         g = open(temp_file_name_val, 'w')
         f = open(temp_file_name_test, 'w')
@@ -391,7 +391,7 @@ def load_characteristics(score, dataset, out, outf, method="Mahala", cluser_num=
 
     if method == "Mahala":
         file_name = os.path.join(outf, "%s_%s_%s.npy" % (score, dataset, out))
-    elif method == "Gentle":
+    elif method == "LRD":
         file_name = os.path.join(outf, "%sLabels_%s_%s_%s.npy" % (str(cluser_num), score, dataset, out))
     data = np.load(file_name)
 

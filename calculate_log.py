@@ -178,7 +178,7 @@ def get_measures_fpr(dir_name, stypes, sort_reverse=False, file_title="confidenc
     for stype in stypes:
         in_score = np.loadtxt('{}/{}_{}_{}_ID.txt'.format(dir_name, file_title, stype, in_dataset_name), delimiter='\n')
         out_score = np.loadtxt('{}/{}_{}_{}_OOD.txt'.format(dir_name, file_title, stype, out_dataset_name), delimiter='\n')
-        if sort_reverse:  # 适用于 energy, Gentle
+        if sort_reverse:  # 适用于 energy, LRD
             measures = get_measures(-out_score, -in_score, recall_level=recall_level)
         else:  # 适用于 （1-maxp）, NBC, SNAC
             measures = get_measures(out_score, in_score, recall_level=recall_level)
