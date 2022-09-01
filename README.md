@@ -9,8 +9,8 @@
 You can create the environment through [Conda](https://docs.conda.io/en/latest/):
 
 ```shell
-conda create -n gentle python=3.6
-conda activate gentle
+conda create -n lrd python=3.6
+conda activate lrd
 pip install -r requirements.txt
 ```
 

@@ -183,7 +183,7 @@ def correlation(batch_size, dataset, dataroot, pre_trained_model, net_type, outf
         info = model_name.split(".")[0]
         feature_save_path = './data/' + net_type + '_' + dataset + '_feature_' + info + '.npy'
         label_save_path = './data/' + net_type + '_' + dataset + '_label_' + info + '.npy'
-        LRD = metrics.calc_lrd(model, train_loader, dataset, batch_size, trans, dataroot, aug_train_loader,
+        lrd = metrics.calc_lrd(model, train_loader, dataset, batch_size, trans, dataroot, aug_train_loader,
                                      feature_save_path, label_save_path, cluster_num)
         print("LRD: ", lrd)
         print("NBC: ", NBC, "\nSNAC: ", SNAC, " \nNAC: ", NAC, "\nTKNC: ", TKNC, "\nLSC: ", LSC)
@@ -279,6 +279,3 @@ if __name__ == '__main__':
     print_correlation(EG_tot, NBC_tot, SNAC_tot, NAC_tot, TKNC_tot, LRD_tot, ACC_tot, LSC_tot)
 
 
-    print("----------- final results --------------")
-    print("Total number:", len(EG_tot))
-    print_correlation_OOD(EG_tot, ACC_tot, maxp_tot, oe_tot, energy_tot, ODIN_tot)
